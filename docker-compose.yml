@@ -1,0 +1,108 @@
+# version: '2.2'
+# services:
+#  es01:
+#   image: docker.elastic.co/elasticsearch/elasticsearch:7.0.1
+#   container_name: es01
+#   environment:
+#     - cluster.initial_master_nodes=es01
+#   ulimits:
+#     memlock:
+#       soft: -1
+#       hard: -1
+#   ports:
+#     - 9200
+
+# redis:
+#   image: redis
+#   volumes:
+#     - redis-data:/var/lib/redis
+#   networks:
+#     - back
+#   # es01:
+#   #   image: docker.elastic.co/elasticsearch/elasticsearch:7.12.0
+#   #   container_name: es01
+#   #   environment:
+#   #     - node.name=es01
+#   #     - cluster.name=es-docker-cluster
+#   #     - discovery.seed_hosts=es02,es03
+#   #     - cluster.initial_master_nodes=es01,es02,es03
+#   #     - bootstrap.memory_lock=true
+#   #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#   #   ulimits:
+#   #     memlock:
+#   #       soft: -1
+#   #       hard: -1
+#   #   volumes:
+#   #     - data01:/usr/share/elasticsearch/data
+#   #   ports:
+#   #     - 9200:9200
+#   #   networks:
+#   #     - elastic
+
+#   redis:
+#     image: redis
+#     # container_name: cache
+#     # expose:
+#     #   - 6379
+
+#   rabbitmq:
+#     image: rabbitmq:3-management-alpine
+#     # container_name: 'rabbitmq'
+#     # ports:
+#     #     - 5672:5672
+#         # - 15672:15672
+#     volumes:
+#         - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+#         - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+#     networks:
+#         - rabbitmq_go_net
+
+# volumes:
+#   data01:
+#     driver: local
+
+# networks:
+#   elastic:
+#     driver: bridge
+
+# networks:
+#   rabbitmq_go_net:
+#     driver: bridge
+
+  # app:
+  #   # some definitions
+  #   links:
+  #     - redis
+  #   environment:
+  #     - REDIS_URL=redis://cache
+
+version: '3.8'
+services:
+  web:
+    build:
+      context: ./
+      target: dev
+    volumes:
+      - .:/src
+    command: npm run start
+    depends_on:
+      - elasticsearch
+    networks: 
+      - esnet
+    ports:
+      - "3000:3000"
+      - 9300:9300
+      - 9200:9200
+  elasticsearch:
+    container_name: tqd-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    environment:
+      NODE_ENV: development
+      DEBUG: nodejs-docker-express:*
+      ELASTIC_URL: http://elasticsearch:9200
+volumes:
+  esdata:
+networks:
+  esnet:
